@@ -8,6 +8,7 @@ import (
 	"syscall"
 
 	"github.com/sergey/GoogleTaskBot/internal/config"
+	"github.com/sergey/GoogleTaskBot/internal/httpclient"
 	"github.com/sergey/GoogleTaskBot/internal/notify"
 	"github.com/sergey/GoogleTaskBot/internal/scheduler"
 	"github.com/sergey/GoogleTaskBot/internal/tasks"
@@ -23,12 +24,20 @@ func main() {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	client, err := tasks.NewClient(ctx, cfg.GoogleClientID, cfg.GoogleClientSecret, cfg.GoogleRefreshToken)
+	httpClient, err := httpclient.New(cfg.HTTPProxy)
+	if err != nil {
+		log.Fatalf("http client: %v", err)
+	}
+	if cfg.HTTPProxy != "" {
+		log.Println("using HTTP proxy for Telegram and Google API")
+	}
+
+	client, err := tasks.NewClient(ctx, cfg.GoogleClientID, cfg.GoogleClientSecret, cfg.GoogleRefreshToken, httpClient)
 	if err != nil {
 		log.Fatalf("google tasks: %v", err)
 	}
 
-	tg, err := telegram.New(cfg, client)
+	tg, err := telegram.New(cfg, client, httpClient)
 	if err != nil {
 		log.Fatalf("telegram: %v", err)
 	}

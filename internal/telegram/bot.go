@@ -2,6 +2,7 @@ package telegram
 
 import (
 	"log"
+	"net/http"
 	"time"
 
 	"github.com/sergey/GoogleTaskBot/internal/config"
@@ -16,9 +17,10 @@ type Bot struct {
 	sessions *SessionStore
 }
 
-func New(cfg *config.Config, client *tasks.Client) (*Bot, error) {
+func New(cfg *config.Config, client *tasks.Client, httpClient *http.Client) (*Bot, error) {
 	pref := tele.Settings{
 		Token:  cfg.TelegramToken,
+		Client: httpClient,
 		Poller: &tele.LongPoller{Timeout: 10 * time.Second},
 	}
 	b, err := tele.NewBot(pref)

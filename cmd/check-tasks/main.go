@@ -10,6 +10,7 @@ import (
 	"os"
 
 	"github.com/sergey/GoogleTaskBot/internal/config"
+	"github.com/sergey/GoogleTaskBot/internal/httpclient"
 	"github.com/sergey/GoogleTaskBot/internal/tasks"
 )
 
@@ -20,7 +21,11 @@ func main() {
 	}
 
 	ctx := context.Background()
-	client, err := tasks.NewClient(ctx, cfg.GoogleClientID, cfg.GoogleClientSecret, cfg.GoogleRefreshToken)
+	httpClient, err := httpclient.New(cfg.HTTPProxy)
+	if err != nil {
+		log.Fatalf("http client: %v", err)
+	}
+	client, err := tasks.NewClient(ctx, cfg.GoogleClientID, cfg.GoogleClientSecret, cfg.GoogleRefreshToken, httpClient)
 	if err != nil {
 		log.Fatalf("client: %v", err)
 	}

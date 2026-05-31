@@ -9,15 +9,16 @@ import (
 )
 
 type Config struct {
-	TelegramToken     string
-	AllowedUserIDs    map[int64]struct{}
-	GoogleClientID    string
+	TelegramToken      string
+	AllowedUserIDs     map[int64]struct{}
+	GoogleClientID     string
 	GoogleClientSecret string
 	GoogleRefreshToken string
-	Timezone          *time.Location
-	MorningNotifyTime string // HH:MM
-	ReminderInterval  time.Duration
-	PollInterval      time.Duration
+	HTTPProxy          string
+	Timezone           *time.Location
+	MorningNotifyTime  string // HH:MM
+	ReminderInterval   time.Duration
+	PollInterval       time.Duration
 }
 
 func Load() (*Config, error) {
@@ -59,12 +60,18 @@ func Load() (*Config, error) {
 		return nil, fmt.Errorf("invalid POLL_INTERVAL: %w", err)
 	}
 
+	proxy := os.Getenv("HTTP_PROXY")
+	if proxy == "" {
+		proxy = os.Getenv("HTTPS_PROXY")
+	}
+
 	return &Config{
 		TelegramToken:      token,
 		AllowedUserIDs:     allowed,
 		GoogleClientID:     clientID,
 		GoogleClientSecret: clientSecret,
 		GoogleRefreshToken: refreshToken,
+		HTTPProxy:          proxy,
 		Timezone:           loc,
 		MorningNotifyTime:  morning,
 		ReminderInterval:   reminderInterval,

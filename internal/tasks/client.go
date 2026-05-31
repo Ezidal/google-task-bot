@@ -3,6 +3,7 @@ package tasks
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"sort"
 	"time"
 
@@ -32,7 +33,12 @@ type Task struct {
 	WebLink   string
 }
 
-func NewClient(ctx context.Context, clientID, clientSecret, refreshToken string) (*Client, error) {
+func NewClient(ctx context.Context, clientID, clientSecret, refreshToken string, httpClient *http.Client) (*Client, error) {
+	if httpClient == nil {
+		httpClient = http.DefaultClient
+	}
+	ctx = context.WithValue(ctx, oauth2.HTTPClient, httpClient)
+
 	cfg := &oauth2.Config{
 		ClientID:     clientID,
 		ClientSecret: clientSecret,
@@ -45,7 +51,7 @@ func NewClient(ctx context.Context, clientID, clientSecret, refreshToken string)
 	token := &oauth2.Token{RefreshToken: refreshToken}
 	ts := cfg.TokenSource(ctx, token)
 
-	svc, err := taskapi.NewService(ctx, option.WithTokenSource(ts))
+	svc, err := taskapi.NewService(ctx, option.WithTokenSource(ts), option.WithHTTPClient(httpClient))
 	if err != nil {
 		return nil, fmt.Errorf("create tasks service: %w", err)
 	}
