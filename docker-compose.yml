@@ -1,0 +1,7 @@
+services:
+  googletaskbot:
+    build: .
+    container_name: googletaskbot
+    restart: unless-stopped
+    env_file:
+      - .env
