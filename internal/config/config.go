@@ -32,9 +32,9 @@ func Load() (*Config, error) {
 		return nil, fmt.Errorf("ALLOWED_USER_IDS must contain at least one user id")
 	}
 
-	clientID := os.Getenv("GOOGLE_CLIENT_ID")
-	clientSecret := os.Getenv("GOOGLE_CLIENT_SECRET")
-	refreshToken := os.Getenv("GOOGLE_REFRESH_TOKEN")
+	clientID := strings.TrimSpace(os.Getenv("GOOGLE_CLIENT_ID"))
+	clientSecret := strings.TrimSpace(os.Getenv("GOOGLE_CLIENT_SECRET"))
+	refreshToken := strings.TrimSpace(os.Getenv("GOOGLE_REFRESH_TOKEN"))
 	if clientID == "" || clientSecret == "" || refreshToken == "" {
 		return nil, fmt.Errorf("GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET and GOOGLE_REFRESH_TOKEN are required")
 	}

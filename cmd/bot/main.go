@@ -36,6 +36,10 @@ func main() {
 	if err != nil {
 		log.Fatalf("google tasks: %v", err)
 	}
+	if err := client.Ping(ctx); err != nil {
+		log.Fatalf("google tasks auth check: %v", err)
+	}
+	log.Println("google tasks API connected")
 
 	tg, err := telegram.New(cfg, client, httpClient)
 	if err != nil {

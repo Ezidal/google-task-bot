@@ -51,11 +51,30 @@ func NewClient(ctx context.Context, clientID, clientSecret, refreshToken string,
 	token := &oauth2.Token{RefreshToken: refreshToken}
 	ts := cfg.TokenSource(ctx, token)
 
-	svc, err := taskapi.NewService(ctx, option.WithTokenSource(ts), option.WithHTTPClient(httpClient))
+	// WithHTTPClient bypasses WithTokenSource in google.golang.org/api — attach OAuth to the transport.
+	base := httpClient.Transport
+	if base == nil {
+		base = http.DefaultTransport
+	}
+	oauthHTTP := &http.Client{
+		Transport: &oauth2.Transport{
+			Source: ts,
+			Base:   base,
+		},
+		Timeout: httpClient.Timeout,
+	}
+
+	svc, err := taskapi.NewService(ctx, option.WithHTTPClient(oauthHTTP))
 	if err != nil {
 		return nil, fmt.Errorf("create tasks service: %w", err)
 	}
 	return &Client{svc: svc}, nil
+}
+
+// Ping checks credentials by refreshing the access token and listing task lists.
+func (c *Client) Ping(ctx context.Context) error {
+	_, err := c.ListTaskLists(ctx)
+	return err
 }
 
 func (c *Client) ListTaskLists(ctx context.Context) ([]TaskList, error) {
