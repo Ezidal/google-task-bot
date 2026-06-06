@@ -5,3 +5,7 @@ services:
     restart: unless-stopped
     env_file:
       - .env
+    environment:
+      NOTIFY_DB_PATH: /app/data/notify.db
+    volumes:
+      - ./data:/app/data

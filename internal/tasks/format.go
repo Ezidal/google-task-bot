@@ -222,3 +222,29 @@ func FilterToday(items []Task, loc *time.Location) []Task {
 	}
 	return out
 }
+
+func FilterTomorrow(items []Task, loc *time.Location) []Task {
+	var out []Task
+	for _, t := range items {
+		if DueKindOf(t, loc, time.Now()) == DueTomorrow {
+			out = append(out, t)
+		}
+	}
+	return out
+}
+
+func FilterSearch(items []Task, query string) []Task {
+	q := strings.ToLower(strings.TrimSpace(query))
+	if q == "" {
+		return nil
+	}
+	var out []Task
+	for _, t := range items {
+		if strings.Contains(strings.ToLower(t.Title), q) ||
+			strings.Contains(strings.ToLower(t.Notes), q) ||
+			strings.Contains(strings.ToLower(t.ListName), q) {
+			out = append(out, t)
+		}
+	}
+	return out
+}

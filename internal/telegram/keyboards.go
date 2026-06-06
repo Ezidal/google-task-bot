@@ -11,8 +11,9 @@ func mainMenu() *tele.ReplyMarkup {
 	menu := &tele.ReplyMarkup{ResizeKeyboard: true}
 	menu.Reply(
 		menu.Row(menu.Text("📋 Все задачи"), menu.Text("🔴 Просроченные")),
-		menu.Row(menu.Text("📅 На сегодня"), menu.Text("📂 Списки")),
-		menu.Row(menu.Text("➕ Добавить"), menu.Text("✅ Выполненные")),
+		menu.Row(menu.Text("📅 На сегодня"), menu.Text("🔵 На завтра")),
+		menu.Row(menu.Text("📂 Списки"), menu.Text("➕ Добавить")),
+		menu.Row(menu.Text("✅ Выполненные")),
 	)
 	return menu
 }
@@ -28,6 +29,7 @@ func dueButtons() *tele.ReplyMarkup {
 			markup.Data("Через неделю", "due", "week"),
 			markup.Data("Без срока", "due", "none"),
 		),
+		markup.Row(markup.Data("📆 Другая дата", "customdue", "add")),
 		markup.Row(markup.Data("« Отмена", "cancel", "add")),
 	)
 	return markup
@@ -45,7 +47,17 @@ func dueButtonsForTask(taskIdx string) *tele.ReplyMarkup {
 			markup.Data("Неделя", "tdue", prefix+"week"),
 			markup.Data("Убрать срок", "tdue", prefix+"none"),
 		),
+		markup.Row(markup.Data("📆 Другая дата", "tcustom", taskIdx)),
 		markup.Row(markup.Data("« Назад", "back", "task")),
+	)
+	return markup
+}
+
+func notesCreateButtons() *tele.ReplyMarkup {
+	markup := &tele.ReplyMarkup{}
+	markup.Inline(
+		markup.Row(markup.Data("Пропустить", "skipnotes", "create")),
+		markup.Row(markup.Data("« Отмена", "cancel", "add")),
 	)
 	return markup
 }
@@ -104,24 +116,36 @@ func taskListButtons(items []tasks.Task, page, totalPages int, viewKind viewKind
 func taskDetailButtons(t tasks.Task, taskIdx string) *tele.ReplyMarkup {
 	markup := &tele.ReplyMarkup{}
 	if t.Status == "completed" {
-		markup.Inline(
+		rows := []tele.Row{
 			markup.Row(markup.Data("↩️ Вернуть", "reopen", taskIdx)),
 			markup.Row(markup.Data("🗑 Удалить", "delete", taskIdx)),
 			markup.Row(markup.Data("« Назад", "back", "list")),
-		)
+		}
+		if t.WebLink != "" {
+			rows = append([]tele.Row{markup.Row(markup.URL("🔗 Google Tasks", t.WebLink))}, rows...)
+		}
+		markup.Inline(rows...)
 		return markup
 	}
-	markup.Inline(
+	rows := []tele.Row{
 		markup.Row(
 			markup.Data("✅ Выполнить", "done", taskIdx),
 			markup.Data("📅 Срок", "dueedit", taskIdx),
 		),
 		markup.Row(
+			markup.Data("✏️ Название", "rename", taskIdx),
 			markup.Data("📝 Заметки", "notes", taskIdx),
+		),
+		markup.Row(
 			markup.Data("🗑 Удалить", "delete", taskIdx),
+			markup.Data("🧹 Без заметок", "clrnotes", taskIdx),
 		),
 		markup.Row(markup.Data("« Назад", "back", "list")),
-	)
+	}
+	if t.WebLink != "" {
+		rows = append([]tele.Row{markup.Row(markup.URL("🔗 Google Tasks", t.WebLink))}, rows...)
+	}
+	markup.Inline(rows...)
 	return markup
 }
 

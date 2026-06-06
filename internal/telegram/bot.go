@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/sergey/GoogleTaskBot/internal/config"
+	"github.com/sergey/GoogleTaskBot/internal/notify"
 	"github.com/sergey/GoogleTaskBot/internal/tasks"
 	tele "gopkg.in/telebot.v3"
 )
@@ -15,9 +16,10 @@ type Bot struct {
 	client   *tasks.Client
 	bot      *tele.Bot
 	sessions *SessionStore
+	notify   *notify.Store
 }
 
-func New(cfg *config.Config, client *tasks.Client, httpClient *http.Client) (*Bot, error) {
+func New(cfg *config.Config, client *tasks.Client, httpClient *http.Client, store *notify.Store) (*Bot, error) {
 	pref := tele.Settings{
 		Token:  cfg.TelegramToken,
 		Client: httpClient,
@@ -27,7 +29,7 @@ func New(cfg *config.Config, client *tasks.Client, httpClient *http.Client) (*Bo
 	if err != nil {
 		return nil, err
 	}
-	return &Bot{cfg: cfg, client: client, bot: b, sessions: NewSessionStore()}, nil
+	return &Bot{cfg: cfg, client: client, bot: b, sessions: NewSessionStore(), notify: store}, nil
 }
 
 func (b *Bot) TeleBot() *tele.Bot {
@@ -42,6 +44,8 @@ func (b *Bot) Run() {
 	b.bot.Handle("/tasks", b.onAllTasks)
 	b.bot.Handle("/overdue", b.onOverdue)
 	b.bot.Handle("/today", b.onTodayTasks)
+	b.bot.Handle("/tomorrow", b.onTomorrowTasks)
+	b.bot.Handle("/find", b.onFind)
 	b.bot.Handle("/lists", b.onListsMenu)
 	b.bot.Handle("/completed", b.onCompleted)
 	b.bot.Handle("/add", b.onAddStart)
@@ -49,6 +53,7 @@ func (b *Bot) Run() {
 	b.bot.Handle(&tele.Btn{Text: "📋 Все задачи"}, b.onAllTasks)
 	b.bot.Handle(&tele.Btn{Text: "🔴 Просроченные"}, b.onOverdue)
 	b.bot.Handle(&tele.Btn{Text: "📅 На сегодня"}, b.onTodayTasks)
+	b.bot.Handle(&tele.Btn{Text: "🔵 На завтра"}, b.onTomorrowTasks)
 	b.bot.Handle(&tele.Btn{Text: "📂 Списки"}, b.onListsMenu)
 	b.bot.Handle(&tele.Btn{Text: "➕ Добавить"}, b.onAddStart)
 	b.bot.Handle(&tele.Btn{Text: "✅ Выполненные"}, b.onCompleted)

@@ -9,16 +9,19 @@ import (
 )
 
 type Config struct {
-	TelegramToken      string
-	AllowedUserIDs     map[int64]struct{}
-	GoogleClientID     string
-	GoogleClientSecret string
-	GoogleRefreshToken string
-	HTTPProxy          string
-	Timezone           *time.Location
-	MorningNotifyTime  string // HH:MM
-	ReminderInterval   time.Duration
-	PollInterval       time.Duration
+	TelegramToken       string
+	AllowedUserIDs      map[int64]struct{}
+	GoogleClientID      string
+	GoogleClientSecret  string
+	GoogleRefreshToken  string
+	HTTPProxy           string
+	Timezone            *time.Location
+	NotifyDBPath        string
+	MorningNotifyTime   string // HH:MM
+	DeadlineNotifyTime  string // HH:MM — напоминание в день дедлайна
+	ReminderInterval    time.Duration
+	NoDueMaxPerDay      int
+	PollInterval        time.Duration
 }
 
 func Load() (*Config, error) {
@@ -60,6 +63,16 @@ func Load() (*Config, error) {
 		return nil, fmt.Errorf("invalid POLL_INTERVAL: %w", err)
 	}
 
+	deadlineNotify := envOr("DEADLINE_NOTIFY_TIME", "09:00")
+	if _, err := time.Parse("15:04", deadlineNotify); err != nil {
+		return nil, fmt.Errorf("invalid DEADLINE_NOTIFY_TIME %q (use HH:MM): %w", deadlineNotify, err)
+	}
+
+	noDueMax, err := strconv.Atoi(envOr("NODUE_MAX_PER_DAY", "1"))
+	if err != nil || noDueMax < 0 {
+		return nil, fmt.Errorf("invalid NODUE_MAX_PER_DAY (use non-negative integer)")
+	}
+
 	proxy := os.Getenv("HTTP_PROXY")
 	if proxy == "" {
 		proxy = os.Getenv("HTTPS_PROXY")
@@ -73,8 +86,11 @@ func Load() (*Config, error) {
 		GoogleRefreshToken: refreshToken,
 		HTTPProxy:          proxy,
 		Timezone:           loc,
+		NotifyDBPath:       envOr("NOTIFY_DB_PATH", "./data/notify.db"),
 		MorningNotifyTime:  morning,
+		DeadlineNotifyTime: deadlineNotify,
 		ReminderInterval:   reminderInterval,
+		NoDueMaxPerDay:     noDueMax,
 		PollInterval:       pollInterval,
 	}, nil
 }

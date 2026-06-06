@@ -13,9 +13,11 @@ const (
 	pendingNone pendingAction = iota
 	pendingTitle
 	pendingListPick
+	pendingNotesCreate
 	pendingNotes
-	pendingEditTitle
-	pendingDueForTask
+	pendingRename
+	pendingCustomDueCreate
+	pendingCustomDueEdit
 )
 
 type viewKind string
@@ -24,6 +26,8 @@ const (
 	viewAll       viewKind = "all"
 	viewOverdue   viewKind = "overdue"
 	viewToday     viewKind = "today"
+	viewTomorrow  viewKind = "tomorrow"
+	viewSearch    viewKind = "search"
 	viewList      viewKind = "list"
 	viewCompleted viewKind = "completed"
 )
@@ -42,6 +46,8 @@ type session struct {
 	notes        string
 	listID       string
 	listName     string
+	dueTime      *time.Time
+	searchQuery  string
 	taskIndex    int
 	view         *viewState
 	pickerLists  []tasks.TaskList
@@ -118,6 +124,52 @@ func (s *SessionStore) StartAdd(userID int64) {
 	s.data[userID] = &session{action: pendingTitle}
 }
 
+func (s *SessionStore) StartAddWithTitle(userID int64, title string) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.data[userID] = &session{action: pendingListPick, title: title}
+}
+
+func (s *SessionStore) SetDueTime(userID int64, due *time.Time) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	sess := s.get(userID)
+	if due == nil {
+		sess.dueTime = nil
+		return
+	}
+	cp := *due
+	sess.dueTime = &cp
+}
+
+func (s *SessionStore) DueTime(userID int64) *time.Time {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	sess := s.data[userID]
+	if sess == nil || sess.dueTime == nil {
+		return nil
+	}
+	cp := *sess.dueTime
+	return &cp
+}
+
+func (s *SessionStore) SetSearchQuery(userID int64, q string) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	sess := s.get(userID)
+	sess.searchQuery = q
+}
+
+func (s *SessionStore) SearchQuery(userID int64) string {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	sess := s.data[userID]
+	if sess == nil {
+		return ""
+	}
+	return sess.searchQuery
+}
+
 func (s *SessionStore) SetTitle(userID int64, title string) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -189,11 +241,33 @@ func (s *SessionStore) StartNotesEdit(userID int64, taskIndex int) {
 	sess.taskIndex = taskIndex
 }
 
-func (s *SessionStore) StartDueEdit(userID int64, taskIndex int) {
+func (s *SessionStore) StartNotesCreate(userID int64) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	sess := s.get(userID)
-	sess.action = pendingDueForTask
+	sess.action = pendingNotesCreate
+}
+
+func (s *SessionStore) StartRename(userID int64, taskIndex int) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	sess := s.get(userID)
+	sess.action = pendingRename
+	sess.taskIndex = taskIndex
+}
+
+func (s *SessionStore) StartCustomDueCreate(userID int64) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	sess := s.get(userID)
+	sess.action = pendingCustomDueCreate
+}
+
+func (s *SessionStore) StartCustomDueEdit(userID int64, taskIndex int) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	sess := s.get(userID)
+	sess.action = pendingCustomDueEdit
 	sess.taskIndex = taskIndex
 }
 
