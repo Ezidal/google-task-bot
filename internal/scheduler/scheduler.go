@@ -197,6 +197,18 @@ func (n *Notifier) notifyMarkup(t tasks.Task) *tele.ReplyMarkup {
 	return m
 }
 
+func (n *Notifier) SendStartup() {
+	msg := fmt.Sprintf(
+		"🟢 <b>Бот запущен</b>\n\n"+
+			"Google Tasks подключён, напоминания активны.\n"+
+			"🕐 %s · утро %s · дедлайн %s",
+		n.cfg.Timezone,
+		n.cfg.MorningNotifyTime,
+		n.cfg.DeadlineNotifyTime,
+	)
+	n.broadcastHTML(msg, nil)
+}
+
 func (n *Notifier) broadcastHTML(text string, markup *tele.ReplyMarkup) {
 	opts := []interface{}{tele.ModeHTML}
 	if markup != nil {

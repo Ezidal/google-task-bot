@@ -93,6 +93,36 @@ docker compose build
 docker compose up -d
 ```
 
+### Обновление на сервере
+
+На сервере в каталоге проекта (где лежат `docker-compose.yml` и `.env`):
+
+```bash
+make deploy
+```
+
+Полная пересборка без кэша Docker:
+
+```bash
+make deploy-fresh
+```
+
+Проверить логи:
+
+```bash
+make logs
+```
+
+Данные уведомлений (`./data/notify.db`) сохраняются в volume — при пересборке не теряются.
+
+Без Docker:
+
+```bash
+git pull
+go build -o bot ./cmd/bot
+# перезапустите systemd/supervisor или вручную остановите старый процесс и запустите ./bot
+```
+
 ## Команды бота
 
 - `/start`, `/help` — справка и меню

@@ -58,6 +58,7 @@ func main() {
 
 	notifier := scheduler.New(cfg, client, tg.TeleBot(), store)
 	notifier.Start(ctx)
+	notifier.SendStartup()
 
 	go func() {
 		sig := make(chan os.Signal, 1)
